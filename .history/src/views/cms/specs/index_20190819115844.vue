@@ -1,0 +1,425 @@
+<template>
+  <el-container>
+    <el-main>
+        <div  style="height:100%;">
+          <el-container>
+            <el-header style="height:auto; padding:0;">
+              <el-form ref="searchForm" :model="searchForm"  class="el-row">
+                <el-row :gutter="20">
+                  <el-col :md="4" :lg="3" >
+                    <el-form-item label="分类" label-width="40px">
+                        <el-select
+                          v-model="searchForm.specstype"
+                          size="small"
+                          clearable
+                          filterable
+                          collapse-tags
+                          placeholder="分类"
+                          style="width:100%;">
+                          <el-option label="全部一级" value=""></el-option>
+                          <el-option
+                            v-for="item in typeData"
+                            :key="item.value"
+                            :label="item.label.toUpperCase()"
+                            :value="item.value"
+                            class="my-option"/>
+                        </el-select>
+                    </el-form-item>
+                  </el-col>
+                  <el-col :md="4" :lg="3">
+                    <el-form-item label="状态" label-width="45px">
+                    <el-select
+                      v-model="searchForm.specstatus"
+                      size="small"
+                      clearable
+                      filterable
+                      collapse-tags
+                      placeholder="状态"
+                      style="width:100%;">
+                      <el-option
+                        v-for="item in statusData"
+                        :key="item.value"
+                        :label="item.label.toUpperCase()"
+                        :value="item.value"
+                        class="my-option"/>
+                    </el-select>
+                    </el-form-item>
+                  </el-col>
+                  <el-col :md="4" :lg="3" >
+                    <el-form-item>
+                      <el-input size="small" placeholder="ID、名称" v-model="searchForm.specsname" clearable/>
+                    </el-form-item>
+                  </el-col>
+                  <el-col :md="8" :lg="4">
+                    <el-row>
+                      <el-col :md="12" :lg="8">
+                        <el-form-item>
+                          <el-button size="small" :loading="loading" type="primary" icon="el-icon-search" @click="getAllList">搜索</el-button>
+                        </el-form-item>
+                      </el-col>
+                      <el-col :md="12" :lg="16">
+                        <el-form-item>
+                          <el-button type="primary" size="small" icon="el-icon-plus" @click="handleAddClick()">添加规格属性</el-button>
+                        </el-form-item>
+                      </el-col>
+                    </el-row>
+                  </el-col>
+                </el-row>
+              </el-form>
+            </el-header>
+            <div class="table-container" style="margin-top:0;">
+              <el-table
+                v-loading="loading"
+                :data="list"
+                border
+                style="width: 100%;">
+                <el-table-column prop="id" label="ID" width="60" align="center"/>
+                <el-table-column prop="brand_name" label="名称" width="140" align="center"/>
+                <el-table-column label="所属分类" align="center">
+                    <template slot-scope="scope">
+                        <ul class="Annex">
+                            <li v-for="(item, index) in scope.row.cate_id">
+                                {{item.c_name}}<span>；</span>
+                            </li>
+                        </ul>
+                    </template> 
+                </el-table-column>
+                <el-table-column  label="销售属性" width="100"  align="center">
+                    <template slot-scope="scope">
+                        <el-tag
+                          :type="scope.row.is_hot == 1 ? 'danger' : 'success'"
+                          disable-transitions>{{scope.row.is_hot == 1 ? '是' : '否'}}</el-tag>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="" label="输入方式" width="180" align="center">
+                   <template slot-scope="scope">
+                    <el-tag type="success" size="mini" v-if="scope.row.inputtype==0">
+                        手动输入    
+                    </el-tag>
+                    <el-tag type="danger" size="mini" v-else-if="scope.row.inputtype==1">
+                        下拉列表选择
+                    </el-tag>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="" label="可选值" width="200" align="center">
+
+                </el-table-column>
+                <el-table-column prop="" label="可筛选" width="80" align="center">
+                    <template slot-scope="scope">
+                        <el-tag
+                          :type="scope.row.screen == 1 ? 'success' : 'danger'"
+                          disable-transitions>{{scope.row.screen == 1 ? '是' : '否'}}</el-tag>
+                    </template>
+                </el-table-column>
+                <el-table-column label="状态" width="100"  align="center">
+                    <template slot-scope="scope">
+                        <el-switch
+                        v-model="scope.row.is_show"
+                        @change="handleStatusChange(scope.$index,scope.row)"
+                        :active-value="1"
+                        :inactive-value="0">
+                        </el-switch>
+                    </template>   
+                </el-table-column>
+                <el-table-column label="操作" align="center">
+                    <template slot-scope="scope">
+                        <el-button size="mini"
+                        @click="handleEdit(scope.$index, scope.row)">修改</el-button>
+                        <el-button size="mini"
+                        type="danger"
+                        @click="handleDelete(scope.$index, scope.row)">删除</el-button>
+                    </template>
+                </el-table-column>
+                
+              </el-table>
+            </div>
+            <div class="pagination-container">
+                  <el-pagination
+                    :current-page="pager.page"
+                    background
+                    :page-sizes="[10, 30, 50, 100]"
+                    :page-size="pager.pageSize"
+                    :total="pager.total"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    @size-change="handleSizeChange"
+                    @current-change="handlePageChange">
+                  </el-pagination>
+            </div>
+          </el-container>
+        </div>
+          <!-- 添加/编辑单位 -->
+        <el-dialog :title="dialogTitle" width="35%"  @close="handleClose" class="demo-ruleForm" :visible.sync="dialogFormVisible">
+            <el-form :model="nologyform" status-icon  label-position="right" label-width="100px" ref="nologyform">
+                <el-form-item  label="名称：">
+                    <el-input  v-model="nologyform.attr_name" placeholder="" clearable/>
+                </el-form-item>
+                <el-form-item  label="分类：">
+                    <ul class="Annex" v-model="nologyform.cate_id">
+                        <li v-for="(item, index) in nologyform.cate_id" v-bind:key='item.c_id'>
+                            {{item.c_name}}; <span @click="removeTodo(index)" style="cursor: pointer;color:red;font-size: 20px;margin-left: 8px;">x</span>
+                        </li>
+                    </ul>
+                    <el-button size="mini" @click="handletype()">添加分类</el-button>
+                </el-form-item>
+                <el-form-item  label="输入方式：">
+                    <el-radio-group @change="radioChange" v-model="nologyform.input_type">
+                      <el-radio :label="1">手动输入</el-radio>
+                      <el-radio :label="2">下拉列表选择</el-radio>
+                    </el-radio-group>
+                </el-form-item>
+                <el-form-item v-show="input_show"  label="可选值：">
+                    
+                </el-form-item>
+                <el-form-item  label="销售属性：">
+                    <el-radio-group  v-model="nologyform.sale_attr">
+                      <el-radio :label="1">是</el-radio>
+                      <el-radio :label="0">否</el-radio>
+                    </el-radio-group>
+                </el-form-item>
+                <el-form-item label="属性筛选：">
+                    <el-radio-group @change="radiooptional" v-model="nologyform.optional">
+                      <el-radio :label="0">否</el-radio>
+                      <el-radio :label="1">是</el-radio>
+                    </el-radio-group>
+                </el-form-item>
+                <div v-show="input_show1">
+                  <el-form-item   label="筛选范围：">
+                      <el-select
+                      v-model="nologyform.optional_val_1"  multiple collapse-tags
+                      style="margin-left: 20px;" placeholder="请选择">
+                      <el-option
+                        v-for="item in Range1"
+                        :key="item.value"
+                        :label="item.value"
+                        :value="item.value">
+                      </el-option>
+                    </el-select>
+                  </el-form-item>
+                  <el-form-item  label="范围数值：">
+                      <el-select
+                      v-model="nologyform.optional_val_2"  multiple collapse-tags
+                      style="margin-left: 20px;" placeholder="请选择">
+                      <el-option
+                        v-for="item in Range2"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value">
+                      </el-option>
+                    </el-select>
+                  </el-form-item>
+                </div>
+                <el-form-item label="状态：">
+                    <el-radio-group  v-model="nologyform.is_show">
+                      <el-radio :label=1>显示</el-radio>
+                      <el-radio :label=0>不显示</el-radio>
+                    </el-radio-group>
+                </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="dialogFormVisible = false">取 消</el-button>
+                <el-button type="primary" @click="quotaopen('nologyform')">确 定</el-button>
+            </div>
+        </el-dialog>
+        <!-- 添加分类-->
+        <el-dialog title="添加分类" width="25%"  class="demo-ruleForm" :visible.sync="dialogFormVisible1">
+            <el-form :model="nologyform1" status-icon  label-position="right" label-width="100px" ref="nologyform1">
+                <el-form-item label="一级分类">
+                    <el-select
+                        @change="selectclick1()"
+                        size="small"
+                        v-model="nologyform1.playtype2" clearable placeholder="">
+                        <el-option
+                        v-for="item in listdata1"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value+','+item.label">
+                        </el-option>
+                    </el-select>
+                </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="dialogFormVisible1 = false">取 消</el-button>
+                <el-button type="primary" @click="quotaopen1('nologyform1')">确 定</el-button>
+            </div>
+        </el-dialog>
+    </el-main>
+  </el-container>
+</template>
+
+<script>
+  import { Message, MessageBox, Loading } from 'element-ui'
+  //import {listByPage, getBilling, getCompanyList, getAllBill} from '@/api/billing'
+
+  export default {
+    name: 'specs',
+    data() {
+      return {
+      Range1:[{value:'5千以下'},{value:'5千-1万'},{value:'1万-5万'},{value:'5万-10万'},{value:'10万以上'}],
+      Range2:['0-5000','5000-10000','10000-50000','50000-100000','100000+'],
+      list:[],
+       //一级分类
+        listdata1:[
+          {
+            label: "一级分类",
+            value: 2
+          }],
+      typeData:[
+        {
+          label: "一级分类",
+          value: 1
+        }
+      ],
+      statusData:[{
+          label: "全部",
+          value: 0
+        },{
+          label: "显示",
+          value: 1
+        },{
+          label: "不显示",
+          value: 2
+        }],
+      searchForm: {
+        specstype:'',
+        specstatus:'',
+        specsname:null,
+        page: 1,
+        limit: 20
+      },
+      pager:{
+        page: 1,
+        pageSize: 20,
+        total: 0,
+      },
+       //添加/编辑单位
+      nologyform:{
+          id:null,
+          cate_id:[{c_id:'1',c_name:'移动广告媒体'},
+              {c_id:'1',c_name:'娱乐类'}],
+          attr_name:'',
+          input_type:1,
+          input_select_val:[],
+          sale_attr:0,
+          optional:0,
+          optional_val_1:[],
+          optional_val_2:[],
+          is_show:1,
+      },
+      nologyform1:{
+        playtype2:'',
+      },
+      dialogFormVisible:false,
+      dialogFormVisible1:false,
+      dialogTitle:'添加规格属性',
+      dialogTitle1:'添加分类',
+      loading: false,
+      loading1: false,
+      labelPosition: 'left',
+      input_show:false,
+      input_show1:false,
+    }
+  },
+  created() {
+    //初始化列表数据
+    //this.getAllList()
+  },
+  mounted() {
+    
+  },
+  filters: {
+    
+  },
+  methods: {
+    //检索输入方式类型
+    radioChange(){
+      console.log(typeof this.nologyform.input_type)
+      if(this.nologyform.input_type ==2){
+          this.input_show = true;
+      }else{
+          this.input_show = false;
+      }
+    },
+    //检索属性筛选类型
+    radiooptional() {
+      console.log(typeof this.nologyform.optional)
+      if(this.nologyform.optional ==1){
+          this.input_show1 = true;
+      }else{
+          this.input_show1 = false;
+      }
+    },
+    handletype() {
+      this.dialogFormVisible1 = true;
+    },
+    //添加规格弹窗
+    handleAddClick() {
+      this.dialogFormVisible = true;
+      this.dialogTitle = "添加单位";
+      this.nologyform.id = null;
+      this.nologyform.quota = '';
+    },
+    
+    /**
+     * 搜索
+     */
+    getAllList() {
+      
+     // this.loading = true
+      listByPage(this.searchForm).then((result) => {
+        if(result.success){
+          this.list = result.data.rows
+          this.pager.total = result.data.count
+        } else {
+          this.$message.error(result.msg)
+        }
+      }).catch((err) => {
+        if(err) this.$message.error(err)
+      }).finally(() => {
+        this.loading=false
+      })
+
+      
+    },
+    //账单详情
+    
+    /**
+     * 分页器：页大小变更
+     */
+    handleSizeChange(val) {
+      this.pager.pageSize = val
+      this.searchForm.pageSize = val
+      this.getAllList()
+    },
+    /**
+     * 分页器：页码变更
+     */
+     handlePageChange(val) {
+      this.pager.page = val
+      this.searchForm.page = val
+      this.getAllList()
+    },
+    /**
+     * 表单关闭时事件
+    */
+    handleClose() {
+      this.$refs.nologyform.resetFields();
+    },
+}
+}
+</script>
+<style rel="stylesheet/scss" lang="scss" scoped>
+  .input-width {
+    width: 150px;
+  }
+  .el-select {
+    width: 120px;
+  }
+  .foot_col span{
+    font-size: 13px;
+    line-height: 31px;
+  }
+  .search-form {
+    /* margin-bottom: -20px; */
+  }
+</style>
+

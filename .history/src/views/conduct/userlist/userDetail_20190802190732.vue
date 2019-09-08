@@ -1,0 +1,117 @@
+<template>
+<div class="app-container">
+    <!-- <ul >
+        <li v-for="(item,index) in navList" :class="{active:!(index-menuIndex)}" @click="menuShow(index)">
+            <a href="#">{{item}}</a>
+        </li>
+    </ul>
+    <div v-show="menuIndex == 0">内容一 </div>
+    <div v-show="menuIndex == 1">内容二 </div> -->
+    <el-tabs v-model="activeName" type="card" @tab-click="handleClick">
+        <el-tab-pane label="用户基本信息" name="first">
+            用户管理
+        </el-tab-pane>
+        <el-tab-pane label="账户资金明细" name="second">
+            
+             <el-table
+                :data="tableData"
+                border
+                style="width: 100%">
+                <el-table-column prop="operationdate" label="操作时间" width="180">
+                </el-table-column>
+                <el-table-column prop="OrderNo" label="订单编号" width="180">
+                </el-table-column>
+                <el-table-column prop="Transaction" label="交易项目">
+                <el-table-column prop="Transactiontype" label="交易类型"   width="180">
+                </el-table-column>
+                <el-table-column
+                prop="Tmoney"
+                label="交易金额">
+                </el-table-column>
+                <el-table-column
+                prop="balanceAmount"
+                label="账户余额"
+                width="180">
+                </el-table-column>
+                <el-table-column
+                prop="tsm"
+                label="交易说明">
+                </el-table-column>
+            </el-table>
+           
+        </el-tab-pane>
+    </el-tabs>
+</div>
+</template>
+<script>
+export default {
+    name:'userDetail',
+    data() {
+        return {
+            // menuIndex:0,
+            // navList:['用户基本信息','账户资金明细'],
+            activeName: 'first',
+            list:[],
+            tabledata:[
+                {operationdate:"2018-09-15T04:24:27.000+0000",Tmoney:400,OrderNo:1111111,Transaction:1,Transactiontype:1,balanceAmount:9527,
+                tsm:xxx任务托管赏金,},
+                {operationdate:"2018-09-15T04:24:27.000+0000",Tmoney:400,OrderNo:1111111,Transaction:2,Transactiontype:2,balanceAmount:9527,
+                tsm:xxx任务托管赏金,},
+                {operationdate:"2018-09-15T04:24:27.000+0000",Tmoney:400,OrderNo:1111111,Transaction:3,Transactiontype:3,balanceAmount:9527,
+                tsm:xxx任务托管赏金,},
+                {operationdate:"2018-09-15T04:24:27.000+0000",Tmoney:400,OrderNo:1111111,Transaction:4,Transactiontype:4,balanceAmount:9527,
+                tsm:xxx任务托管赏金,},
+                {operationdate:"2018-09-15T04:24:27.000+0000",Tmoney:400,OrderNo:1111111,Transaction:5,Transactiontype:5,balanceAmount:9527,
+                tsm:xxx任务托管赏金,}
+            ],
+        };
+    },
+    created() {
+        //获取传递过来的id
+        this.countid = this.$route.query["id"];            
+    },
+    computed: {
+        
+    },
+    mounted() {
+        this.$nextTick(() => {
+            this.edit(this.countid)
+        })
+    },
+    methods:{
+        //初始化接口
+        edit(id){
+            console.log(id);
+        },
+        handleClick(tab, event) {
+            if(this.activeName=='first'){
+
+            }else{
+
+            }
+        },
+        // menuShow (index) {
+        //     this.menuIndex = index
+        //     console.log(this.menuIndex)
+        // }
+    }
+}
+</script>
+<style rel="stylesheet/scss" lang="scss" scoped>
+// .app-container {
+//     ul li {
+//         margin-left: 2px;
+//         list-style:none;
+//         display:inline-block;
+//         height:30px;
+//         line-height:30px;
+//         width:120px;
+//         text-align:center;
+//         background: #d7d7d7;
+//     }
+//     li.active {
+//         background: #AEAEAE;
+//     }
+// }
+
+</style>
